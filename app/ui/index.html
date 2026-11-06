@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src xkd-media:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>小蝌蚪点读制作</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="titlebar"></div>
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">♪</span><div><strong>小蝌蚪</strong><small>点读制作 · Mac</small></div></div>
+    <div class="shelf-title"><span>我的点读书</span><span id="book-count">0</span></div>
+    <button id="new-book" class="new-book">＋ 新建点读书</button>
+    <div id="books" class="books"></div>
+    <button id="batch-open" class="new-book batch-entry">♫ 批量转 MP3<small>毛毛虫云盘上传预设</small></button>
+    <div class="sidebar-bottom"><button id="help" class="text-button">ⓘ 使用说明</button><button id="update-open" class="text-button">版本更新</button><span id="version"></span></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>把熟悉的声音，放进孩子的书里</span><span class="offline"><i></i> 离线使用</span></header>
+    <div id="notice" role="status" hidden></div>
+    <section id="welcome" class="welcome" hidden>
+      <div class="welcome-symbol">♪</div><div class="eyebrow">从一本书开始</div>
+      <h1>给孩子做一本<br>有声音的书。</h1>
+      <p>整理音频，连接点读码，生成可放入笔里的 NOB 点读包。</p>
+      <button id="welcome-create" class="primary">新建第一本点读书 <span>↗</span></button>
+      <div class="steps"><div><b>01</b><strong>添加一本书</strong><small>用书名保存你的制作进度</small></div><div><b>02</b><strong>对应音频与码值</strong><small>支持识别 MP3 文件名中的码值</small></div><div><b>03</b><strong>生成并试读</strong><small>导出 NOB，放到兼容的笔中测试</small></div></div>
+    </section>
+    <section id="editor" hidden>
+      <div class="book-heading"><div class="book-cover" id="book-cover">书</div><div class="book-heading-text"><div class="eyebrow">我的点读书 / 编辑制作</div><input id="book-title" aria-label="书名" maxlength="150"><div class="save-line"><span id="save-status">已保存</span><span>·</span><span id="updated-at"></span></div></div><button id="save" class="secondary">保存修改</button></div>
+      <div class="summary"><div><strong id="track-count">0</strong><span>段音频</span></div><div><strong id="point-count">0</strong><span>个点读码</span></div><div><strong id="pending-count">0</strong><span>段待填写码值</span></div><p>码值须与书上已有的码或点读贴纸一致。<br>同一码的多段音频，将按表中顺序连续播放。</p></div>
+      <div class="workspace">
+        <div class="section-heading"><div><h2>音频与点读码</h2><p>文件名如 10000.mp3，可自动识别码值。</p></div><div class="actions"><button id="assign" class="secondary small">连续填码</button><button id="import" class="primary small">＋ 导入 MP3</button></div></div>
+        <div id="audio-empty" class="audio-empty"><span>♫</span><h3>把这本书的音频放进来</h3><p>支持一次选择多个 MP3；导入时复制文件，保留原件。</p><button id="empty-import" class="secondary">选择音频文件</button></div>
+        <div id="table-wrap" class="table-wrap" hidden><table><thead><tr><th class="order">顺序</th><th class="code">点读码</th><th>音频说明 / 文件名</th><th class="operations">操作</th></tr></thead><tbody id="tracks"></tbody></table></div>
+      </div>
+      <div class="export-panel"><div><h2>准备好让书发声了吗？</h2><p>保留 MP3 原声，不改变采样率、声道或码率；核对后生成 NOB。首次使用请先在笔上试读。</p></div><button id="export" class="primary">生成 NOB <span>↗</span></button></div>
+      <div id="progress" role="status" hidden><span class="spinner"></span><span id="progress-text"></span></div>
+      <section id="history-section" class="history" hidden><h2>这本书的生成记录</h2><div id="history"></div></section>
+    </section>
+    <footer>NOB 离线制作 · macOS 13 及以上 · 为支持此类 NOB 的小蝌蚪 T6 准备</footer>
+  </main>
+  <div id="player-panel" class="player-panel" hidden><div><small>正在试听</small><strong id="player-name"></strong></div><audio id="player" controls></audio><button id="close-player" class="icon-button" aria-label="关闭试听">×</button></div>
+  <dialog id="create-dialog"><form id="create-form"><div class="eyebrow">新的点读项目</div><h2>先给这本书起个名字</h2><label for="new-title">书名</label><input id="new-title" maxlength="150" required placeholder="例如：好饿的毛毛虫" autocomplete="off"><p>音频、码值和生成记录会保存在这本书里。</p><div class="dialog-actions"><button type="button" id="cancel-create" class="secondary">取消</button><button type="submit" class="primary">创建书籍</button></div></form></dialog>
+  <dialog id="assign-dialog"><form id="assign-form"><div class="eyebrow">对应一组连续贴纸码</div><h2>从哪个码值开始？</h2><label for="start-code">起始码值</label><input id="start-code" inputmode="numeric" required placeholder="填写你已知的贴纸码值"><p>只填写空白项，已有的码值会保留。请确认实际贴纸码连续；这项操作不会给实体书印上点读码。</p><div class="dialog-actions"><button type="button" id="cancel-assign" class="secondary">取消</button><button type="submit" class="primary">填写空白码值</button></div></form></dialog>
+  <dialog id="update-dialog">
+    <div class="eyebrow">READING PEN MAKER · GITHUB RELEASES</div><h2>版本更新</h2>
+    <p id="update-current"></p><p id="update-message" role="status">正在读取更新设置…</p>
+    <progress id="update-progress" max="100" value="0" hidden></progress>
+    <div id="update-release" hidden><strong id="update-next"></strong><pre id="update-notes"></pre></div>
+    <div class="update-settings"><label><input type="checkbox" id="update-auto"> 启动时自动检查，每 6 小时再次检查</label><label><input type="checkbox" id="update-auto-download"> 发现新版后自动下载，安装前仍询问</label><label><input type="checkbox" id="update-candidates"> 接收候选版本</label></div>
+    <p>更新来自公开仓库 jadechoulu/reading-pen-maker，无需 GitHub Token。检查和下载需要联网，书籍与音频不会上传。安装会退出应用并保留资料；新版启动失败会恢复旧版。</p>
+    <div class="dialog-actions update-actions"><button id="update-releases" class="secondary">GitHub 发布页 ↗</button><button id="update-check" class="secondary">检查更新</button><button id="update-download" class="primary" hidden>下载更新</button><button id="update-cancel" class="secondary" hidden>取消下载</button><button id="update-install" class="primary" hidden>安装并重启</button><button id="update-close" class="secondary">关闭</button></div>
+  </dialog>
+  <dialog id="batch-dialog">
+    <div class="eyebrow">独立音频工具 · 毛毛虫云盘</div><h2>批量转 MP3</h2>
+    <div class="batch-preset"><strong>MP3 ／ ABR 128 kbps</strong><p>按你上传毛毛虫云盘时使用的配置转换。ABR 是平均码率目标，实际平均值会随内容变化。采样率和声道在 MP3 编码支持范围内沿用原音频。</p></div>
+    <p>支持 WMA、MP3、WAV、M4A、AAC、FLAC、OGG、AIFF。输出到新建文件夹，保留源文件；同名文件自动加序号。这是单独的转换工具，小蝌蚪 NOB 制作不会自动套用此预设。</p>
+    <div class="batch-selection"><button id="batch-choose" class="secondary">选择音频文件</button><span id="batch-count">尚未选择音频</span></div>
+    <ul id="batch-files" class="batch-files"></ul>
+    <div id="batch-progress" role="status" hidden></div>
+    <div id="batch-result" role="status" hidden></div>
+    <ul id="batch-results" class="batch-files" hidden></ul>
+    <div class="dialog-actions"><button id="batch-show" class="secondary" hidden>在 Finder 中显示</button><button id="batch-close" class="secondary">关闭</button><button id="batch-start" class="primary">选择保存位置并转换</button></div>
+  </dialog>
+  <dialog id="help-dialog"><div class="eyebrow">使用说明</div><h2>从 MP3 做成点读资源</h2><ol><li><strong>新建书籍并导入 MP3。</strong>文件名中的码值可以自动识别，如 10000.mp3；同一码的多段音频可命名为 10000-1.mp3、10000-2.mp3。</li><li><strong>核对点读码。</strong>已有铺码书需使用原有码值；普通书需使用兼容的、码值已知的点读贴纸。此版本不会识别书页里的微型点码，也没有书页热点编辑。</li><li><strong>试听并调整顺序。</strong>表格中相同点读码的音频，按从上至下顺序连续播放。</li><li><strong>生成 NOB，先试读一本。</strong>检查 MP3 完整解码后，保留原始音频字节打包，不强制改采样率、声道或码率。文件核对不能替代真实点读笔测试；多本书请避免重叠码段。</li><li><strong>需要转换其他音频时，使用「批量转 MP3」。</strong>其中的毛毛虫云盘预设为你之前使用的 MP3／ABR 128 kbps 配置，不代表小蝌蚪音频要求。</li></ol><p>资料保存在本机。当前只做普通 NOB；NOD/NOS、厂商账号、授权管理、字幕和复杂互动不在此版范围内。关闭应用不会删除书籍；原始音频不会被修改。</p><div class="dialog-actions"><button id="close-help" class="primary">知道了</button></div></dialog>
+  <script src="renderer.js"></script>
+</body>
+</html>

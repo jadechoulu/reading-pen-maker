@@ -1,0 +1,27 @@
+{
+  "name": "reading-pen-maker",
+  "version": "0.3.0",
+  "description": "小蝌蚪点读制作 离线 Mac 版",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "app/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "prestart": "node scripts/package.cjs --development",
+    "test": "node --test tests/*.test.cjs",
+    "build": "node scripts/package.cjs",
+    "test:e2e": "node tests/desktop.e2e.cjs",
+    "test:update": "node tests/update.e2e.cjs"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "playwright-core": "1.62.1"
+  },
+  "dependencies": {
+    "yauzl": "3.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jadechoulu/reading-pen-maker.git"
+  }
+}
