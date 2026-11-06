@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('xkd', {
   importAudio: id => invoke('audio:import', id), removeAudio: (id, trackId) => invoke('audio:remove', id, trackId),
   exportNob: id => invoke('books:export', id), showExport: (id, exportId) => invoke('exports:show', id, exportId),
   chooseBatch: () => invoke('batch:choose'), convertBatch: () => invoke('batch:convert'), showBatch: () => invoke('batch:show'),
+  openCloud: () => invoke('batch:cloud'),
   updateState: () => invoke('updates:state'), checkUpdates: () => invoke('updates:check'),
   configureUpdates: settings => invoke('updates:configure', settings), downloadUpdate: () => invoke('updates:download'),
   cancelUpdate: () => invoke('updates:cancel'), installUpdate: () => invoke('updates:install'),

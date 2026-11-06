@@ -100,6 +100,11 @@ $('#export').onclick = () => perform(async () => {
 $('#help').onclick = () => $('#help-dialog').showModal(); $('#close-help').onclick = () => $('#help-dialog').close(); $('#close-player').onclick = stopPlayer;
 $('#batch-open').onclick = () => { stopPlayer(); $('#batch-dialog').showModal(); };
 $('#batch-close').onclick = () => $('#batch-dialog').close();
+$('#batch-cloud').onclick = async () => {
+  $('#batch-cloud-error').hidden = true;
+  try { await window.xkd.openCloud(); }
+  catch { $('#batch-cloud-error').textContent = '无法打开浏览器，请手动访问 https://cloud.xiaobien.com/'; $('#batch-cloud-error').hidden = false; }
+};
 $('#batch-dialog').addEventListener('cancel', event => { if (state.busy) event.preventDefault(); });
 $('#batch-choose').onclick = () => perform(async () => {
   const files = await window.xkd.chooseBatch();

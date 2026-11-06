@@ -132,6 +132,7 @@ async function ready() {
     try { batchResult = await convertBatch(await audioTool(), batchFiles, choice.filePaths[0], progress); return batchResult; }
     finally { exporting = false; progress(''); }
   });
+  handle('batch:cloud', () => shell.openExternal('https://cloud.xiaobien.com/'), false);
   handle('batch:show', async () => {
     if (!batchResult) throw new Error('还没有转换结果');
     await fs.access(batchResult.folder); shell.showItemInFolder(path.join(batchResult.folder, '转换记录.json'));

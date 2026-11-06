@@ -54,7 +54,9 @@
     <div class="dialog-actions update-actions"><button id="update-releases" class="secondary">GitHub 发布页 ↗</button><button id="update-check" class="secondary">检查更新</button><button id="update-download" class="primary" hidden>下载更新</button><button id="update-cancel" class="secondary" hidden>取消下载</button><button id="update-install" class="primary" hidden>安装并重启</button><button id="update-close" class="secondary">关闭</button></div>
   </dialog>
   <dialog id="batch-dialog">
-    <div class="eyebrow">独立音频工具 · 毛毛虫云盘</div><h2>批量转 MP3</h2>
+    <div class="eyebrow">独立音频工具 · 毛毛虫云盘</div>
+    <div class="batch-heading"><h2>批量转 MP3</h2><button id="batch-cloud" class="secondary cloud-shortcut" title="在默认浏览器打开小彼恩网盘"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18H6a4 4 0 0 1-.5-8A6.5 6.5 0 0 1 18 8a5 5 0 0 1 1 9.9"/><path d="M12 20V11m-3 3 3-3 3 3"/></svg><span>小彼恩网盘</span><span aria-hidden="true">↗</span></button></div>
+    <p id="batch-cloud-error" role="status" hidden></p>
     <div class="batch-preset"><strong>MP3 ／ ABR 128 kbps</strong><p>按你上传毛毛虫云盘时使用的配置转换。ABR 是平均码率目标，实际平均值会随内容变化。采样率和声道在 MP3 编码支持范围内沿用原音频。</p></div>
     <p>支持 WMA、MP3、WAV、M4A、AAC、FLAC、OGG、AIFF。输出到新建文件夹，保留源文件；同名文件自动加序号。这是单独的转换工具，小蝌蚪 NOB 制作不会自动套用此预设。</p>
     <div class="batch-selection"><button id="batch-choose" class="secondary">选择音频文件</button><span id="batch-count">尚未选择音频</span></div>
