@@ -2,6 +2,8 @@
 
 源码仓库：[jadechoulu/reading-pen-maker](https://github.com/jadechoulu/reading-pen-maker)。仓库使用通用名称，便于后续扩展其他点读笔；当前功能和界面为独立的小蝌蚪制作工具。
 
+最新正式版本：[0.3.1 下载与发布说明](https://github.com/jadechoulu/reading-pen-maker/releases/tag/v0.3.1)。
+
 独立的离线 Electron 应用，面向 Intel Mac（macOS 13 及以上）。本地管理书籍、导入 MP3、对应点读码、试听并生成普通 NOB V3；另提供独立的批量转 MP3 工具。
 
 ## 使用
@@ -38,7 +40,7 @@
 
 网络只用于固定 GitHub 更新服务，书籍和音频不会上传。源码模式使用 Git 更新。App 必须放在可写目录，不能直接在磁盘镜像或系统隔离的临时位置更新。首次从 0.1/0.2 升级到 0.3 需要手动替换完整 App；旧版本没有更新模块。自实现更新中的 GitHub SHA256 校验不等同于 Apple Developer ID 签名，当前 Electron 仍未签名、未公证。
 
-后续发布约定：GitHub Release tag 为 `v主版本.次版本.修订号`，Intel 附件必须是打包脚本生成的 `reading-pen-maker-版本-macos-x64.zip`；同时发布源码包可使用其他名称。应用只选择完成上传、具有 GitHub SHA256 digest 的匹配架构安装包。第一份公开 Release 尚需实际发布；仓库存在不等于有可用更新。
+后续发布约定：GitHub Release tag 为 `v主版本.次版本.修订号`，Intel 附件必须是打包脚本生成的 `reading-pen-maker-版本-macos-x64.zip`；同时发布源码包可使用其他名称。应用只选择完成上传、具有 GitHub SHA256 digest 的匹配架构安装包。首个正式 Release v0.3.1 已发布，包含 Intel 安装包、源码 ZIP 和 SHA256 校验文件。
 
 ## 开发与构建
 
