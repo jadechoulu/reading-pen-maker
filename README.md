@@ -2,13 +2,13 @@
 
 源码仓库：[jadechoulu/reading-pen-maker](https://github.com/jadechoulu/reading-pen-maker)。仓库使用通用名称，便于后续扩展其他点读笔；当前功能和界面为独立的小蝌蚪制作工具。
 
-最新正式版本：[0.3.1 下载与发布说明](https://github.com/jadechoulu/reading-pen-maker/releases/tag/v0.3.1)。
+最新正式版本：[0.3.2 下载与发布说明](https://github.com/jadechoulu/reading-pen-maker/releases/tag/v0.3.2)。
 
 独立的离线 Electron 应用，面向 Intel Mac（macOS 13 及以上）。本地管理书籍、导入 MP3、对应点读码、试听并生成普通 NOB V3；另提供独立的批量转 MP3 工具。
 
 ## 使用
 
-1. 解压 Intel ZIP，双击里面的 `Electron.app`。应用窗口和菜单名称为「小蝌蚪点读制作」。首版保留这个应用文件名以兼容已验证的 Intel 运行时，请暂时不要重命名；也可把它连同外层「小蝌蚪点读制作」文件夹放到「应用程序」。
+1. 解压 Intel ZIP，把「小蝌蚪点读制作.app」直接拖入「应用程序」，双击打开。Finder、程序坞及应用菜单均使用「小蝌蚪点读制作」名称。首次从 0.3.1 或更早版迁移，请退出旧版后手动下载本版；旧更新器只识别 Electron.app，不能直接安装更名包。确认新版能读取书籍后，可移除旧的 Electron.app；资料库位置不变。
 2. 新建书籍，导入 MP3。`10000.mp3` 会识别为码值 10000；`10000-1.mp3` 和 `10000-2.mp3` 会识别为同一码的多段音频。
 3. 在表格填写或修改码值、音频说明，用上下箭头调整顺序，点击「保存修改」。同一码的音频按表格顺序连续播放。
 4. 「连续填码」仅填写空白项，跳过已有的码值。只有你确认一组实际贴纸码连续时才使用。
@@ -30,7 +30,7 @@
 - 成品用本地 `book_id=0`、`customer_id=54` 的 NOB V3 普通点位格式；连续真实码值合并成范围，不占用中间未使用的空码。
 - 成品保存后重新读取，核对长度、头校验、正文摘要、点位和每段音频内容。适用目标是支持此类 NOB 的小蝌蚪 T6；本工具生成的新书仍需真实点读笔验证安装、切书和点读。文件核对通过不等于设备验收。
 - 本版不含 NOD/NOS、厂商账号、设备授权、DAB/XDR 转换、字幕、双语场景或互动游戏，不调用原软件 Windows DLL，不使用其内嵌测试账号或凭据。
-- 应用为个人用途独立实现，非厂商官方 Mac 客户端。Electron 保留官方 x64 原始二进制，应用未签名、未进行 Apple Developer 公证。如果系统提示无法验证开发者，可在确认来源后使用 Finder 右键「打开」，或系统「隐私与安全性」中的「仍要打开」。
+- 应用为个人用途独立实现，非厂商官方 Mac 客户端。使用官方 x64 Electron，更名后进行本地 ad-hoc 签名，未进行 Developer ID 签名或 Apple Developer 公证。如果系统提示无法验证开发者，可在确认来源后使用 Finder 右键「打开」，或系统「隐私与安全性」中的「仍要打开」。
 
 ## 版本更新（0.3.0 起）
 
@@ -38,9 +38,9 @@
 
 流程参考点读包工坊：按版本与当前芯片选择成品，核对 GitHub 提供的大小和 SHA256，再检查 ZIP 路径、符号链接、应用标识、版本、最低系统版本及主程序／Framework／FFmpeg 架构。应用退出后由 macOS 自带 `/bin/sh` 和文件工具替换；新版本完成资料库加载与界面初始化后确认启动，失败则恢复旧 App。安装不触碰书籍资料库，不需要安装 Python、Node.js、FFmpeg 或 CLI。
 
-网络只用于固定 GitHub 更新服务，书籍和音频不会上传。源码模式使用 Git 更新。App 必须放在可写目录，不能直接在磁盘镜像或系统隔离的临时位置更新。首次从 0.1/0.2 升级到 0.3 需要手动替换完整 App；旧版本没有更新模块。自实现更新中的 GitHub SHA256 校验不等同于 Apple Developer ID 签名，当前 Electron 仍未签名、未公证。
+网络只用于固定 GitHub 更新服务，书籍和音频不会上传。源码模式使用 Git 更新。App 必须放在可写目录，不能直接在磁盘镜像或系统隔离的临时位置更新。首次从 0.3.1 或更早版升级到 0.3.2 需要手动下载安装并更换完整 App；0.3.1 更新器只识别旧文件名，0.1/0.2 没有更新模块。自实现更新中的 GitHub SHA256 校验不等同于 Apple Developer ID 签名，当前应用只有本地 ad-hoc 签名，未进行 Developer ID 签名或公证。
 
-后续发布约定：GitHub Release tag 为 `v主版本.次版本.修订号`，Intel 附件必须是打包脚本生成的 `reading-pen-maker-版本-macos-x64.zip`；同时发布源码包可使用其他名称。应用只选择完成上传、具有 GitHub SHA256 digest 的匹配架构安装包。首个正式 Release v0.3.1 已发布，包含 Intel 安装包、源码 ZIP 和 SHA256 校验文件。
+后续发布约定：GitHub Release tag 为 `v主版本.次版本.修订号`，Intel 附件必须是打包脚本生成的 `reading-pen-maker-版本-macos-x64.zip`；同时发布源码包可使用其他名称。应用只选择完成上传、具有 GitHub SHA256 digest 的匹配架构安装包。正式 Release 包含 Intel 安装包、源码 ZIP 和 SHA256 校验文件。
 
 ## 开发与构建
 
@@ -56,12 +56,12 @@ npm test
 
 `npm start` 会自动准备 Intel Electron 和音频工具；Apple 芯片电脑运行此 Intel 开发版需要 Rosetta。`npm run build` 会准备独立运行时，可直接运行生成的 App。只有首次准备依赖需要联网。
 
-`npm test` 中的音频集成测试需要先准备内置 FFmpeg。`APP_PATH='/绝对路径/Electron.app' VALIDATION_DIR='/新的验收目录' npm run test:e2e` 验收真实成品。只替代系统文件对话框选择，导入、试听、独立批量转换、NOB 生成和重启读取均运行真实逻辑。独立 Python 格式核对需要 Python 3，也可通过 `REFERENCE_PYTHON` 指定其可执行路径；用户日常使用不需要 Python。
+`npm test` 中的音频集成测试需要先准备内置 FFmpeg。`APP_PATH='/绝对路径/小蝌蚪点读制作.app' VALIDATION_DIR='/新的验收目录' npm run test:e2e` 验收真实成品。只替代系统文件对话框选择，导入、试听、独立批量转换、NOB 生成和重启读取均运行真实逻辑。独立 Python 格式核对需要 Python 3，也可通过 `REFERENCE_PYTHON` 指定其可执行路径；用户日常使用不需要 Python。
 
-`APP_PATH='/绝对路径/Electron.app' UPDATE_VALIDATION_DIR='/新的更新验收目录' npm run test:update` 使用独立 App 副本执行真实升级和启动失败回退，并逐文件核对书籍资料库 SHA256；仅替代 GitHub 响应和安装确认，不上传测试版本。
+`APP_PATH='/绝对路径/小蝌蚪点读制作.app' UPDATE_VALIDATION_DIR='/新的更新验收目录' npm run test:update` 使用独立 App 副本执行真实升级和启动失败回退，并逐文件核对书籍资料库 SHA256；仅替代 GitHub 响应和安装确认，不上传测试版本。
 
 ## 格式来源与许可
 
 NOB V3 普通点位格式沿用本机点读包工坊中的 `vendor-engine/bnl_to_nob.py`、`package_tool.py` 已核对布局，重新以 JavaScript 实现普通连续播放；原项目代码未修改。FFmpeg 来源为 `ffmpeg-static b6.1.1`，为 GPLv3 构建，随应用保留许可和对应构建资料。Electron 许可证及 Chromium notices 由 Electron 包保留。私人音频、书籍和资料库不随应用打包。
 
-构建说明：本机 macOS 26.6.2、Apple Silicon + Rosetta 对照中，保留 `Electron.app` 文件名时可运行；同一副本仅修改外层应用文件名后，GPU/网络辅助进程退出，恢复原名又可运行。具体系统原因未确证，首版保留官方应用文件名、内部进程名称与原始二进制，设置独立的应用标识、菜单名称和图标；不重写 Framework，不关闭页面沙箱。原始发行 ZIP 使用 Electron 官方 SHA256 校验。Electron 未做 Developer ID 签名和 Apple 公证，FFmpeg 保留单独的本地签名。Rosetta 流程通过不等于 Intel 原生硬件或真实点读笔通过。
+构建说明：从 0.3.2 起，外层 App、主程序、四个辅助进程及其 bundle 元数据同步更名，最后使用 macOS codesign 完成本地 ad-hoc 签名并验证。早期仅改外层文件名曾导致辅助进程异常，因此必须通过打包脚本生成完整的新包。官方发行 ZIP 使用 Electron 官方 SHA256 校验；不关闭页面沙箱。ad-hoc 签名不等于 Developer ID 签名或 Apple 公证。Rosetta 流程通过不等于 Intel 原生硬件或真实点读笔通过。

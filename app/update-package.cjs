@@ -5,26 +5,29 @@ const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const yauzl = require('yauzl');
 const run = promisify(execFile);
-const APP_NAME = 'Electron.app', BUNDLE_ID = 'local.xkd.nob.mac';
+const APP_NAME = '小蝌蚪点读制作.app', APP_NAMES = [APP_NAME, 'Electron.app'], EXECUTABLES = ['小蝌蚪点读制作', 'Electron'], BUNDLE_ID = 'local.xkd.nob.mac';
 const inside = (root, value) => { const relative = path.relative(root, value); return relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative); };
 
 function checkArchive(filename) {
   return new Promise((resolve, reject) => {
-    yauzl.open(filename, { lazyEntries: true, strictFileNames: true, validateEntrySizes: true }, (error, zip) => {
+    yauzl.open(filename, { lazyEntries: true, decodeStrings: false, validateEntrySizes: true }, (error, zip) => {
       if (error) return reject(error);
-      const entries = new Map(); let size = 0, ended = false;
+      const entries = new Map(); let size = 0, ended = false, rootName;
       const fail = error => { if (!ended) { ended = true; zip.close(); reject(error); } };
       zip.on('error', fail);
       zip.on('entry', entry => {
         try {
-          const name = entry.fileName.replace(/\/$/, ''), parts = name.split('/');
+          // ditto 写入 UTF-8 名称时可能不设置 ZIP 的 UTF-8 标志；按本应用约定严格解码原始字节。
+          const filename = new TextDecoder('utf-8', { fatal: true }).decode(entry.fileName);
+          const name = filename.replace(/\/$/, ''), parts = name.split('/');
           // @CfSecAICode 遵循消费金融安全编码 BE-FILE-002 规范: 解压前验证每个条目，拒绝穿越、重复、特殊文件和 App 外路径。
-          if (!name || /[\\\x00-\x1f]/.test(name) || parts[0] !== APP_NAME || parts.some(p => !p || p === '.' || p === '..') || entries.has(name)) throw new Error('更新包包含无效或重复路径');
+          if (!name || /[\\\x00-\x1f]/.test(name) || !APP_NAMES.includes(parts[0]) || (rootName && parts[0] !== rootName) || parts.some(p => !p || p === '.' || p === '..') || entries.has(name)) throw new Error('更新包包含无效或重复路径');
+          rootName = parts[0];
           const kind = (entry.externalFileAttributes >>> 16) & 0xf000;
           if (![0, 0x8000, 0x4000, 0xa000].includes(kind)) throw new Error('更新包包含特殊文件');
           size += entry.uncompressedSize;
           if (size > 4 * 1024 ** 3 || entries.size >= 100000) throw new Error('更新包展开后过大');
-          const item = { kind: entry.fileName.endsWith('/') ? 0x4000 : kind, link: null };
+          const item = { kind: filename.endsWith('/') ? 0x4000 : kind, link: null };
           entries.set(name, item);
           if (kind !== 0xa000) return zip.readEntry();
           if (entry.uncompressedSize > 4096) throw new Error('更新包的符号链接无效');
@@ -35,7 +38,7 @@ function checkArchive(filename) {
               try {
                 const target = Buffer.concat(chunks).toString('utf8');
                 const resolved = path.posix.resolve('/', path.posix.dirname(name), target);
-                if (!target || target.startsWith('/') || /[\\\x00-\x1f]/.test(target) || !resolved.startsWith('/' + APP_NAME + '/')) throw new Error('更新包的符号链接越出 App');
+                if (!target || target.startsWith('/') || /[\\\x00-\x1f]/.test(target) || !resolved.startsWith('/' + rootName + '/')) throw new Error('更新包的符号链接越出 App');
                 item.link = target; zip.readEntry();
               } catch (error) { fail(error); }
             });
@@ -50,8 +53,8 @@ function checkArchive(filename) {
               if (ancestor && ancestor.kind !== 0x4000) throw new Error('更新包试图通过链接或文件写入子路径');
             }
           }
-          if (!entries.has(`${APP_NAME}/Contents/Info.plist`)) throw new Error('更新包缺少应用信息');
-          if (!ended) { ended = true; resolve(); }
+          if (!entries.has(`${rootName}/Contents/Info.plist`)) throw new Error('更新包缺少应用信息');
+          if (!ended) { ended = true; resolve(rootName); }
         } catch (error) { fail(error); }
       });
       zip.readEntry();
@@ -71,7 +74,7 @@ async function validateApp(folder, version, arch) {
   await walk(root);
   const { stdout } = await run('/usr/bin/plutil', ['-convert', 'json', '-o', '-', path.join(root, 'Contents/Info.plist')]);
   const info = JSON.parse(stdout);
-  if (info.CFBundleIdentifier !== BUNDLE_ID || info.CFBundleExecutable !== 'Electron' || info.CFBundleShortVersionString !== version) throw new Error('更新包的应用身份或版本不一致');
+  if (info.CFBundleIdentifier !== BUNDLE_ID || !EXECUTABLES.includes(info.CFBundleExecutable) || info.CFBundleShortVersionString !== version) throw new Error('更新包的应用身份或版本不一致');
   const system = (await run('/usr/bin/sw_vers', ['-productVersion'])).stdout.trim().split('.').map(Number);
   const minimum = (info.LSMinimumSystemVersion || '13.0').split('.').map(Number);
   for (let i = 0; i < 3; i++) {
@@ -80,7 +83,7 @@ async function validateApp(folder, version, arch) {
   }
   if (!['x64', 'arm64'].includes(arch)) throw new Error('不支持此芯片架构');
   const machine = arch === 'x64' ? 'x86_64' : 'arm64';
-  for (const relative of ['Contents/MacOS/Electron', 'Contents/Resources/runtime/ffmpeg', 'Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework']) {
+  for (const relative of ['Contents/MacOS/' + info.CFBundleExecutable, 'Contents/Resources/runtime/ffmpeg', 'Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework']) {
     await run('/usr/bin/lipo', [path.join(root, relative), '-verify_arch', machine], { timeout: 30000 });
   }
   const metadata = JSON.parse(await fs.readFile(path.join(root, 'Contents/Resources/app/package.json'), 'utf8'));
@@ -94,11 +97,11 @@ async function validateApp(folder, version, arch) {
 }
 
 async function prepareArchive(archive, output, version, arch) {
-  await checkArchive(archive);
+  const rootName = await checkArchive(archive);
   await fs.mkdir(output, { mode: 0o700 });
   await run('/usr/bin/ditto', ['-x', '-k', archive, output], { timeout: 180000 });
-  const app = path.join(output, APP_NAME);
+  const app = path.join(output, rootName);
   await validateApp(app, version, arch);
   return app;
 }
-module.exports = { APP_NAME, BUNDLE_ID, checkArchive, validateApp, prepareArchive };
+module.exports = { APP_NAME, APP_NAMES, BUNDLE_ID, checkArchive, validateApp, prepareArchive };

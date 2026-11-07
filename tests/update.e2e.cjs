@@ -6,7 +6,7 @@ const { execFileSync } = require('node:child_process');
 const crypto = require('node:crypto');
 const { _electron } = require('playwright-core');
 const { Library } = require('../app/library.cjs');
-const { validateApp } = require('../app/update-package.cjs');
+const { APP_NAME, validateApp } = require('../app/update-package.cjs');
 const source = process.env.APP_PATH, output = process.env.UPDATE_VALIDATION_DIR;
 if (!source || !output || !path.isAbsolute(output)) throw new Error('请指定 APP_PATH 和新的 UPDATE_VALIDATION_DIR');
 const version = require('../package.json').version, parts = version.split('.').map(Number);parts[2]++;
@@ -22,11 +22,12 @@ const children = new Set(), report={version,next,arch:'x64',hardware:'Apple Sili
 async function runCase(name, failStart) {
   const root=path.join(output,name),parent=path.join(root,'安装 位置'),candidateParent=path.join(root,'新版'),profile=path.join(root,'资料库');
   await fs.mkdir(parent,{recursive:true});await fs.mkdir(candidateParent);
-  const target=path.join(parent,'Electron.app'),candidate=path.join(candidateParent,'Electron.app');
+  const target=path.join(parent,APP_NAME),candidate=path.join(candidateParent,APP_NAME);
   execFileSync('/usr/bin/ditto',[source,target]);execFileSync('/usr/bin/ditto',[source,candidate]);
   for(const key of ['CFBundleShortVersionString','CFBundleVersion'])execFileSync('/usr/libexec/PlistBuddy',['-c',`Set :${key} ${next}`,path.join(candidate,'Contents/Info.plist')]);
   const metadataPath=path.join(candidate,'Contents/Resources/app/package.json'),metadata=JSON.parse(await fs.readFile(metadataPath));metadata.version=next;await fs.writeFile(metadataPath,JSON.stringify(metadata));
   if(failStart)await fs.writeFile(path.join(candidate,'Contents/Resources/app/app/main.cjs'),'process.exit(7);\n');
+  execFileSync('/usr/bin/codesign',['--force','--deep','--sign','-',candidate]);
   await validateApp(candidate,next,'x64');
   await assert.rejects(()=>validateApp(candidate,'99.0.0','x64'),/版本不一致/);
   await assert.rejects(()=>validateApp(candidate,next,'arm64'));
@@ -36,7 +37,7 @@ async function runCase(name, failStart) {
   let book=await library.create('升级前的书');book=await library.importAudio(book.id,[audio]);
   await fs.writeFile(path.join(profile,'update-settings.json'),JSON.stringify({autoCheck:false,autoDownload:failStart,includePrerelease:false}));
   const before=await treeHashes(library.root);
-  desktop=await _electron.launch({executablePath:path.join(target,'Contents/MacOS/Electron'),args:[`--user-data-dir=${profile}`],timeout:60000});
+  desktop=await _electron.launch({executablePath:path.join(target,'Contents/MacOS/小蝌蚪点读制作'),args:[`--user-data-dir=${profile}`],timeout:60000});
   const page=await desktop.firstWindow({timeout:60000});await page.locator('#editor').waitFor();
   assert.equal(await page.locator('#book-title').inputValue(),'升级前的书');
   await desktop.evaluate(({app,dialog},data)=>{
@@ -52,7 +53,7 @@ async function runCase(name, failStart) {
   if(!failStart)await page.waitForFunction(()=>!document.querySelector('#update-download').hidden && !document.querySelector('#update-download').disabled);
   assert.match(await page.locator('#update-next').textContent(),new RegExp(next.replaceAll('.','\\.')));
   if(!failStart)await page.locator('#update-download').click();
-  await page.waitForFunction(()=>!document.querySelector('#update-install').hidden && !document.querySelector('#update-install').disabled,{},{timeout:180000});
+  await page.waitForFunction(()=>{const message=document.querySelector('#update-message').textContent;if(message.startsWith('准备更新失败'))throw new Error(message);return !document.querySelector('#update-install').hidden && !document.querySelector('#update-install').disabled;},{},{timeout:180000});
   await page.screenshot({path:path.join(root,'下载校验完成.png'),fullPage:true});
   const prepared=await desktop.evaluate(({app})=>process.getBuiltinModule('module').createRequire(app.getAppPath()+'/package.json')('./app/main.cjs').getUpdater().prepared);
   assert.ok(prepared.job.startsWith(profile));

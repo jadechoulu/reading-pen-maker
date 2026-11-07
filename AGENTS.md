@@ -11,3 +11,5 @@
 - NOB 制作保留 MP3 原始字节，只验证完整解码；不得把毛毛虫云盘的转码预设套用到小蝌蚪。
 - 独立「批量转 MP3」使用用户指定的毛毛虫云盘 MP3／ABR 128 kbps 配置，输出新目录，保留源文件；这不代表厂商完整规格。
 - 更新源固定为 jadechoulu/reading-pen-maker 的公开 GitHub Releases，不需要 Token。安装包名 reading-pen-maker-版本-macos-x64.zip；使用系统安装脚本，不依赖用户安装 Python 或 Node。
+
+- 从 0.3.2 起正式 App 文件名为“小蝌蚪点读制作.app”，主程序与辅助进程同步更名并使用 ad-hoc 签名；不能仅重命名外层 App。更名前的 0.3.1 更新器需要手动下载迁移到本版。

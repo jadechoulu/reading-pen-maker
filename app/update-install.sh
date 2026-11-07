@@ -18,10 +18,14 @@ case "$oldpid:$timeout" in *[!0-9:]*|:*|*:) exit 2;; esac
 case "$token" in *[!a-f0-9-]*|'') exit 2;; esac
 [ "${#token}" -eq 36 ] || exit 2
 parent=${target%/*}
-case "$target" in /*/Electron.app) ;; *) exit 2;; esac
-[ "$target" = "$parent/Electron.app" ] && [ "$staged" = "$parent/.rpm-update-$token.app" ] && [ "$backup" = "$parent/.rpm-backup-$token.app" ] || exit 2
+case "$target" in /*/小蝌蚪点读制作.app|/*/Electron.app) ;; *) exit 2;; esac
+[ "$staged" = "$parent/.rpm-update-$token.app" ] && [ "$backup" = "$parent/.rpm-backup-$token.app" ] || exit 2
 [ "$job" = "$userdata/updates/$token" ] || exit 2
 [ -d "$target" ] && [ ! -L "$target" ] && [ -d "$staged" ] && [ ! -e "$backup" ] || exit 2
+executable() {
+  program=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$target/Contents/Info.plist") || return 1
+  case "$program" in 小蝌蚪点读制作|Electron) /usr/bin/printf '%s\n' "$target/Contents/MacOS/$program";; *) return 1;; esac
+}
 moved=0
 installed=0
 newpid=''
@@ -40,7 +44,8 @@ rollback() {
   result 'failed:新版未能启动，已恢复旧版，书籍和音频未改动'
   if [ "$moved" -eq 1 ]; then
     /bin/rm -rf "$staged" "$job/extracted"
-    "$target/Contents/MacOS/Electron" "--user-data-dir=$userdata" > "$job/rollback-startup.log" 2>&1 &
+    launch=$(executable) || exit 1
+    "$launch" "--user-data-dir=$userdata" > "$job/rollback-startup.log" 2>&1 &
     /usr/bin/printf '%s\n' "$!" > "$job/rollback-pid.txt"
   fi
   exit 1
@@ -55,7 +60,8 @@ done
 moved=1
 /bin/mv "$staged" "$target" || rollback
 installed=1
-"$target/Contents/MacOS/Electron" "--user-data-dir=$userdata" "--rpm-update-job=$job" "--rpm-update-token=$token" > "$job/startup.log" 2>&1 &
+launch=$(executable) || rollback
+"$launch" "--user-data-dir=$userdata" "--rpm-update-job=$job" "--rpm-update-token=$token" > "$job/startup.log" 2>&1 &
 newpid=$!
 count=0
 while [ "$count" -lt "$((timeout * 5))" ]; do

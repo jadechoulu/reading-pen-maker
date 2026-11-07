@@ -9,6 +9,7 @@ const { pipeline } = require('node:stream/promises');
 const root = path.resolve(__dirname, '..');
 const cache = path.join(root, 'build-cache');
 const version = require('../package.json').version;
+const product = '小蝌蚪点读制作';
 const checksums = {
   'ffmpeg-darwin-x64.gz': '929b375c1182d956c51f7ac25e0b2b0411fb01f6f407aa15c9758efeb4242106',
   'darwin-x64.LICENSE': '2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af',
@@ -53,8 +54,7 @@ async function build() {
   }
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const outputRoot = path.join(root, 'dist', `v${version}-${stamp}`);
-  // 保留官方 Electron.app、内部二进制和 Helper 名称；仅组装资源与展示信息。
-  // 本机 x64/Rosetta 对照中，单独重命名外层 .app 后辅助进程退出，保留原名可运行。
+  // 主程序、辅助进程、bundle 元数据和外层 App 同步更名，最后进行本地签名。
   const stageRoot = path.join(root, 'build', `app-${stamp}`); await fs.mkdir(stageRoot, { recursive: true });
   execFileSync('/usr/bin/ditto', ['-x', '-k', path.join(cache, electronName), stageRoot]);
   const staged = path.join(stageRoot, 'Electron.app'), resources = path.join(staged, 'Contents', 'Resources');
@@ -66,16 +66,30 @@ async function build() {
   await fs.cp(runtime, path.join(resources, 'runtime'), { recursive: true });
   await fs.copyFile(path.join(root, 'app', 'icon.icns'), path.join(resources, 'electron.icns'));
   const plist = path.join(staged, 'Contents', 'Info.plist');
-  for (const [key, value] of Object.entries({ CFBundleDisplayName: '小蝌蚪点读制作', CFBundleName: '小蝌蚪点读制作', CFBundleIdentifier: 'local.xkd.nob.mac', CFBundleShortVersionString: version, CFBundleVersion: version, LSMinimumSystemVersion: '13.0', LSApplicationCategoryType: 'public.app-category.education' })) {
+  for (const [key, value] of Object.entries({ CFBundleDisplayName: product, CFBundleName: product, CFBundleExecutable: product, CFBundleIdentifier: 'local.xkd.nob.mac', CFBundleShortVersionString: version, CFBundleVersion: version, LSMinimumSystemVersion: '13.0', LSApplicationCategoryType: 'public.app-category.education' })) {
     try { execFileSync('/usr/libexec/PlistBuddy', ['-c', `Set :${key} ${value}`, plist], { stdio: 'pipe' }); }
     catch { execFileSync('/usr/libexec/PlistBuddy', ['-c', `Add :${key} string ${value}`, plist], { stdio: 'pipe' }); }
   }
-  // 保留官方未签名二进制，不假称完成 Developer ID 签名或 Apple 公证。
+  await fs.rename(path.join(staged, 'Contents/MacOS/Electron'), path.join(staged, 'Contents/MacOS', product));
+  for (const [suffix, identifier] of [['', 'helper'], [' (GPU)', 'helper.gpu'], [' (Plugin)', 'helper.plugin'], [' (Renderer)', 'helper.renderer']]) {
+    const previous = 'Electron Helper' + suffix, next = product + ' Helper' + suffix;
+    const helper = path.join(staged, 'Contents/Frameworks', previous + '.app');
+    const helperPlist = path.join(helper, 'Contents/Info.plist');
+    for (const [key, value] of Object.entries({ CFBundleExecutable: next, CFBundleDisplayName: next, CFBundleName: next, CFBundleIdentifier: 'local.xkd.nob.mac.' + identifier })) {
+      try { execFileSync('/usr/libexec/PlistBuddy', ['-c', `Set :${key} ${value}`, helperPlist], { stdio: 'pipe' }); }
+      catch { execFileSync('/usr/libexec/PlistBuddy', ['-c', `Add :${key} string ${value}`, helperPlist], { stdio: 'pipe' }); }
+    }
+    await fs.rename(path.join(helper, 'Contents/MacOS', previous), path.join(helper, 'Contents/MacOS', next));
+    await fs.rename(helper, path.join(staged, 'Contents/Frameworks', next + '.app'));
+  }
+  // 本地 ad-hoc 签名保证更名后 bundle 一致；不代表 Developer ID 签名或 Apple 公证。
+  execFileSync('/usr/bin/codesign', ['--force', '--deep', '--sign', '-', staged]);
+  execFileSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', staged]);
   await fs.mkdir(outputRoot, { recursive: true });
-  const published = path.join(outputRoot, 'Electron.app');
+  const published = path.join(outputRoot, product + '.app');
   execFileSync('/usr/bin/ditto', [staged, published]);
   // 直接比对交付副本与官方解压的主程序、Framework；这里没有重写可执行代码。
-  for (const relative of ['Contents/MacOS/Electron', 'Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework']) {
+  for (const relative of ['Contents/MacOS/' + product, 'Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework']) {
     const before = crypto.createHash('sha256').update(await fs.readFile(path.join(staged, relative))).digest('hex');
     const after = crypto.createHash('sha256').update(await fs.readFile(path.join(published, relative))).digest('hex');
     if (before !== after) throw new Error('交付副本二进制不一致');

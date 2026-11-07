@@ -11,7 +11,7 @@ const run = promisify(execFile);
 const REPOSITORY = 'jadechoulu/reading-pen-maker';
 const RELEASES_URL = `https://github.com/${REPOSITORY}/releases`;
 const API_URL = `https://api.github.com/repos/${REPOSITORY}/releases?per_page=100`;
-const APP_NAME = 'Electron.app';
+const APP_NAMES = ['小蝌蚪点读制作.app', 'Electron.app'];
 const hosts = new Set(['api.github.com', 'github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com']);
 
 function compareVersions(left, right) {
@@ -234,7 +234,7 @@ class Updater {
     let staged;
     try {
       const target = path.resolve(this.execPath, '../../..');
-      if (path.basename(target) !== APP_NAME || target.includes('/AppTranslocation/') || target.startsWith('/Volumes/') || (await fs.lstat(target)).isSymbolicLink()) throw new Error('请从应用程序或其他可写文件夹打开 Electron.app 后更新');
+      if (!APP_NAMES.includes(path.basename(target)) || target.includes('/AppTranslocation/') || target.startsWith('/Volumes/') || (await fs.lstat(target)).isSymbolicLink()) throw new Error('请从应用程序或其他可写文件夹打开小蝌蚪点读制作后更新');
       await fs.access(target, constants.W_OK); await fs.access(path.dirname(target), constants.W_OK);
       await validateApp(target, this.app.getVersion(), process.arch);
       const parent = path.dirname(target);
